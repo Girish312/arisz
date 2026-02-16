@@ -87,12 +87,16 @@ export default function DashboardPage() {
   const handleDeleteTask = async (id: string) => {
     if (!confirm('Are you sure you want to delete this task?')) return
 
+    // Optimistically remove the task from UI
+    setTasks((prev) => prev.filter((task) => task.id !== id))
+
     try {
       await fetch(`/api/tasks/${id}`, { method: 'DELETE' })
-      fetchTasks()
       fetchAnalytics()
     } catch (error) {
       console.error('Error deleting task:', error)
+      // Optionally, re-fetch tasks if deletion failed
+      fetchTasks()
     }
   }
 
@@ -148,6 +152,10 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* New Task Button - always visible, top right */}
+        <div className="flex justify-end mb-6">
+          <TaskFormDialog onTaskCreated={() => { fetchTasks(); fetchAnalytics(); }} />
+        </div>
         <Tabs defaultValue="tasks" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
@@ -252,7 +260,7 @@ export default function DashboardPage() {
                 </Select>
               </div>
 
-              <TaskFormDialog onTaskCreated={() => { fetchTasks(); fetchAnalytics(); }} />
+              {/* Removed duplicate New Task button from filters row for clarity */}
             </div>
 
             {/* Tasks List */}
