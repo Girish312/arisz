@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
   // No authentication, allow all users
@@ -30,21 +29,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Get all tasks
-      const allTasks = await prisma.task.findMany({
-        where: {
-          parentId: null, // Only main tasks
-        },
-    });
 
     // Get tasks in period
-      const tasksInPeriod = await prisma.task.findMany({
-        where: {
-          parentId: null,
-        createdAt: {
-          gte: startDate,
-        },
-      },
-    });
 
     // Get completed tasks in period
     const completedTasks = tasksInPeriod.filter(t => t.status === 'COMPLETED')

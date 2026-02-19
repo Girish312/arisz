@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)
 ![Version](https://img.shields.io/badge/version-1.0.0-orange.svg?style=for-the-badge)
 
-A modern task management application that helps you track your daily routines, manage tasks with subtasks, and visualize your progress through beautiful charts and graphs.
+A modern task management application that helps you track your daily routines, manage tasks with subtasks and visualize your progress through beautiful charts and graphs.
 
 ## 🌟 Features
 
@@ -86,8 +86,6 @@ npm run dev
 # or
 yarn dev
 ```
-
-Visit [http://localhost:3000](http://localhost:3000) to see your app!
 
 ## 📦 Project Structure
 
