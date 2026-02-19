@@ -32,42 +32,12 @@ A modern task management application that helps you track your daily routines, m
 - **Quick Actions**: Keyboard shortcuts for power users
 - **Search & Filter**: Find tasks quickly with advanced filtering
 
-## 🏗️ Technology Stack
-
-### Frontend
-- **React 18.3+**: Modern UI library with hooks
-- **Next.js 14**: React framework with App Router
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Utility-first CSS framework
-- **Framer Motion**: Smooth animations and transitions
-- **Recharts**: Beautiful, responsive charts
-- **React Hook Form**: Efficient form management
-- **Zustand**: Lightweight state management
-- **date-fns**: Modern date utility library
-
-### Backend
-- **Next.js API Routes**: Serverless backend functions
-- **Zod**: Schema validation
-
-### Deployment & Storage
-- **Vercel**: Frontend and API hosting
-- **GitHub**: Version control and CI/CD
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have:
-- **Node.js** 18.x or higher
-- **npm** or **yarn** package manager
-- **Git** for version control
-- **GitHub** account for deployment
-- **Vercel** account (free tier works)
-
 ## 🚀 Quick Start
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/arisz.git
+git clone https://github.com/girish312/arisz.git
 cd arisz
 ```
 
