@@ -13,6 +13,7 @@
 # Production
 /build
 
+
 # Misc
 .DS_Store
 *.pem
@@ -32,10 +33,6 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
-
-# Prisma
-prisma/*.db
-prisma/*.db-journal
 
 # IDE
 .vscode/

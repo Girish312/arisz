@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/firebase'
+import { collection, addDoc, getDocs, query, where as fsWhere } from 'firebase/firestore'
 
 // GET all tasks
 export async function GET(req: NextRequest) {
@@ -7,15 +9,18 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status');
     const category = searchParams.get('category');
     const parentId = searchParams.get('parentId');
-      const where: any = {};
-    if (status) where.status = status;
-    if (category) where.category = category;
-    if (parentId === 'null') {
-      where.parentId = null;
-    } else if (parentId) {
-      where.parentId = parentId;
+
+    let q = collection(db, 'tasks');
+    let constraints = [];
+    if (status && status !== 'all') constraints.push(fsWhere('status', '==', status));
+    if (category && category !== 'all') constraints.push(fsWhere('category', '==', category));
+    if (parentId) {
+      if (parentId === 'null') constraints.push(fsWhere('parentId', '==', null));
+      else constraints.push(fsWhere('parentId', '==', parentId));
     }
-    const tasks = []; // In-memory placeholder for tasks
+    const finalQuery = constraints.length ? query(q, ...constraints) : q;
+    const snapshot = await getDocs(finalQuery);
+    const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json({ tasks });
   } catch (error) {
     console.error('Error fetching tasks:', error);
@@ -30,15 +35,26 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, description, category, priority, estimatedTime, dueDate, parentId } = body;
+    const { title, description, category, priority, estimatedTime, dueDate, parentId, status = 'PENDING' } = body;
     if (!title) {
       return NextResponse.json(
         { error: 'Title is required' },
         { status: 400 }
       );
     }
-    const task = { title, description, category: category || 'Personal', priority: priority || 'MEDIUM', estimatedTime, dueDate, parentId }; // Placeholder for task creation
-    return NextResponse.json(task, { status: 201 });
+    const newTask = {
+      title,
+      description: description || '',
+      category: category || 'Personal',
+      priority: priority || 'MEDIUM',
+      estimatedTime: estimatedTime || null,
+      dueDate: dueDate || null,
+      parentId: parentId || null,
+      status,
+      createdAt: new Date().toISOString(),
+    };
+    const docRef = await addDoc(collection(db, 'tasks'), newTask);
+    return NextResponse.json({ id: docRef.id, ...newTask }, { status: 201 });
   } catch (error) {
     console.error('Error creating task:', error);
     return NextResponse.json(
