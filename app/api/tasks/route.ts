@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // GET all tasks
 export async function GET(req: NextRequest) {
-  // No authentication, allow all users
-  // const user = { id: 'demo' };
   try {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
@@ -17,7 +15,7 @@ export async function GET(req: NextRequest) {
     } else if (parentId) {
       where.parentId = parentId;
     }
-    const tasks = []; // Placeholder for tasks, as Prisma is removed
+    const tasks = []; // In-memory placeholder for tasks
     return NextResponse.json({ tasks });
   } catch (error) {
     console.error('Error fetching tasks:', error);
@@ -30,8 +28,6 @@ export async function GET(req: NextRequest) {
 
 // CREATE new task
 export async function POST(req: NextRequest) {
-  // No authentication, allow all users
-  // const user = { id: 'demo' };
   try {
     const body = await req.json();
     const { title, description, category, priority, estimatedTime, dueDate, parentId } = body;

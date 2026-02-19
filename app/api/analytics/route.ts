@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
-  // No authentication, allow all users
-  // const user = { id: 'demo' };
 
   try {
     const { searchParams } = new URL(req.url)
@@ -28,12 +26,16 @@ export async function GET(req: NextRequest) {
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     }
 
-    // Get all tasks
-
-    // Get tasks in period
-
+    // In-memory placeholder for all tasks
+    const allTasks = [];
+    // Filter tasks in the selected period (mock logic)
+    const tasksInPeriod = allTasks.filter((task) => {
+      if (!task.createdAt) return false;
+      const created = new Date(task.createdAt);
+      return created >= startDate && created <= now;
+    });
     // Get completed tasks in period
-    const completedTasks = tasksInPeriod.filter(t => t.status === 'COMPLETED')
+    const completedTasks = tasksInPeriod.filter(t => t.status === 'COMPLETED');
 
     // Category breakdown
     const categoryBreakdown = allTasks.reduce((acc: any, task) => {

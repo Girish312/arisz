@@ -33,10 +33,6 @@ A clear description of the bug.
 1. Go to '...'
 2. Click on '...'
 3. Scroll down to '...'
-4. See error
-
-## Expected Behavior
-What you expected to happen.
 
 ## Actual Behavior
 What actually happened.
@@ -59,9 +55,7 @@ We welcome feature suggestions! Please provide:
 3. **Alternatives**: Other solutions you've considered
 4. **Additional Context**: Screenshots, mockups, etc.
 
-## 🔧 Development Setup
-
-### Prerequisites
+5. **Setup database** (removed Prisma instructions)
 
 - Node.js 18+ installed
 - Git installed
@@ -78,10 +72,6 @@ We welcome feature suggestions! Please provide:
    cd arisz
    ```
 
-3. **Install dependencies**
-   ```bash
-   npm install
-   ```
 
 4. **Setup environment**
    ```bash
