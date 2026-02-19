@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  // Patch: ensure session.user has id property for TypeScript
-  const user = session.user as typeof session.user & { id: string };
+  // No authentication, allow all users
+  // const user = { id: 'demo' };
 
   try {
     const { searchParams } = new URL(req.url)
@@ -36,18 +30,16 @@ export async function GET(req: NextRequest) {
     }
 
     // Get all tasks
-    const allTasks = await prisma.task.findMany({
-      where: {
-        userId: user.id,
-        parentId: null, // Only main tasks
-      },
+      const allTasks = await prisma.task.findMany({
+        where: {
+          parentId: null, // Only main tasks
+        },
     });
 
     // Get tasks in period
-    const tasksInPeriod = await prisma.task.findMany({
-      where: {
-        userId: user.id,
-        parentId: null,
+      const tasksInPeriod = await prisma.task.findMany({
+        where: {
+          parentId: null,
         createdAt: {
           gte: startDate,
         },

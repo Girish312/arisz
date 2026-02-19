@@ -52,23 +52,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* CTA Buttons */}
+          {/* Dashboard Redirect */}
           <div className="flex gap-4 justify-center mt-12">
-            <Link href="/register">
+            <Link href="/dashboard">
               <Button size="lg" className="text-lg px-8 py-6">
-                Get Started
+                Go to Dashboard
               </Button>
             </Link>
-            <Link href="/login">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                Sign In
-              </Button>
-            </Link>
-          </div>
-
-          {/* Footer */}
-          <div className="mt-16 text-gray-500 dark:text-gray-400">
-            <p>Built with Next.js, TypeScript, and PostgreSQL</p>
           </div>
         </div>
       </div>

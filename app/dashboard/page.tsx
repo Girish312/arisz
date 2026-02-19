@@ -1,10 +1,8 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TaskFormDialog } from '@/components/tasks/task-form-dialog'
@@ -38,20 +36,17 @@ interface Analytics {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [analytics, setAnalytics] = useState<Analytics | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [filterStatus, setFilterStatus] = useState('all')
-  const [filterCategory, setFilterCategory] = useState('all')
-  const [analyticsPeriod, setAnalyticsPeriod] = useState('daily')
+  // No authentication/session logic
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('daily');
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    }
-  }, [status, router])
+    // No authentication check
+  }, [])
 
   const fetchTasks = async () => {
     try {
@@ -79,10 +74,8 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      Promise.all([fetchTasks(), fetchAnalytics()]).finally(() => setLoading(false))
-    }
-  }, [status, filterStatus, filterCategory, analyticsPeriod])
+    Promise.all([fetchTasks(), fetchAnalytics()]).finally(() => setLoading(false));
+  }, [filterStatus, filterCategory, analyticsPeriod]);
 
   const handleDeleteTask = async (id: string) => {
     if (!confirm('Are you sure you want to delete this task?')) return
@@ -101,14 +94,16 @@ export default function DashboardPage() {
   }
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
         </div>
-      </div>
-    )
+      );
+    }
   }
 
   // Prepare chart data
@@ -138,14 +133,7 @@ export default function DashboardPage() {
             <span className="text-sm text-gray-500">Task Management</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">
-              {session?.user?.name || session?.user?.email}
-            </span>
-            <Link href="/api/auth/signout">
-              <Button variant="outline" size="sm">
-                Sign Out
-              </Button>
-            </Link>
+            {/* No user info or sign out button */}
           </div>
         </div>
       </header>

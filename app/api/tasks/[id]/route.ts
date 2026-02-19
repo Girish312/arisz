@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
 // GET single task
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  // Patch: ensure session.user has id property for TypeScript
-  const user = session.user as typeof session.user & { id: string };
+  // No authentication, allow all users
+  // const user = { id: 'demo' };
   try {
     const task = await prisma.task.findUnique({
       where: {
         id: params.id,
-        userId: user.id,
       },
       include: {
         subtasks: true,
@@ -38,11 +31,8 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 // UPDATE task
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const user = session.user as typeof session.user & { id: string };
+  // No authentication, allow all users
+  // const user = { id: 'demo' };
   try {
     const body = await req.json();
     const { title, description, category, priority, status, estimatedTime, actualTime, dueDate } = body;
@@ -50,7 +40,6 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     const existingTask = await prisma.task.findUnique({
       where: {
         id: params.id,
-        userId: user.id,
       },
     });
     if (!existingTask) {
@@ -92,30 +81,26 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 // DELETE task
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const user = session.user as typeof session.user & { id: string };
+  // No authentication, allow all users
+  // const user = { id: 'demo' };
   try {
     // Check if task exists and belongs to user
     const existingTask = await prisma.task.findUnique({
       where: {
         id: params.id,
-        userId: user.id,
       },
     });
     if (!existingTask) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
-    // Delete all subtasks first (cascading delete)
-    await prisma.task.deleteMany({
-      where: { parentId: params.id, userId: user.id },
-    });
+      // Delete all subtasks first (cascading delete)
+      await prisma.task.deleteMany({
+        where: { parentId: params.id },
+      });
     // Delete the main task
-    await prisma.task.delete({
-      where: { id: params.id, userId: user.id },
-    });
+      await prisma.task.delete({
+        where: { id: params.id },
+      });
     return NextResponse.json({ message: 'Task and subtasks deleted' }, { status: 200 });
   } catch (error) {
     console.error('Error deleting task:', error);
