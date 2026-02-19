@@ -27,7 +27,20 @@ export async function GET(req: NextRequest) {
     }
 
     // In-memory placeholder for all tasks
-    const allTasks = [];
+    type Task = {
+      id: string;
+      title: string;
+      description?: string | null;
+      category: string;
+      priority: string;
+      status: string;
+      estimatedTime?: number | null;
+      actualTime?: number | null;
+      dueDate?: string | null;
+      createdAt?: string | Date;
+      subtasks?: Task[];
+    };
+    const allTasks: Task[] = [];
     // Filter tasks in the selected period (mock logic)
     const tasksInPeriod = allTasks.filter((task) => {
       if (!task.createdAt) return false;
