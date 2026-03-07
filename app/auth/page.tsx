@@ -44,7 +44,7 @@ export default function AuthPage() {
 
   const handleSignOut = async () => {
     await signOut(auth);
-    setUser(null);
+    // AuthProvider context will update user state automatically
   };
 
   const { user } = useAuth();
