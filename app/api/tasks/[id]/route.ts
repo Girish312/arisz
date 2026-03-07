@@ -1,14 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/firebase'
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { getAuth } from '@/lib/firebase-admin'
+import { getFirestore } from 'firebase-admin/firestore'
+const db = getFirestore();
 
-// GET single task
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params;
+// Helper to verify Firebase Auth token and extract userId
+async function getUserId(req: NextRequest): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) return null;
+  const idToken = authHeader.replace('Bearer ', '').trim();
   try {
-    const ref = doc(db, 'tasks', params.id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
+    const decoded = await getAuth().verifyIdToken(idToken);
+    console.log('Decoded UID:', decoded.uid);
+    return decoded.uid;
+  } catch (err) {
+    console.error('Token verification error:', err);
+    return null;
+  }
+}
+
+export const GET = async (
+  req: NextRequest,
+  context: { params: { id: string } }
+) => {
+  const { id } = context.params;
+  const userId = await getUserId(req);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
+  }
+  try {
+    const ref = db.collection('users').doc(userId).collection('tasks').doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
     return NextResponse.json({ id: snap.id, ...snap.data() });
@@ -19,16 +41,22 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       { status: 500 }
     );
   }
-}
+};
 
-// UPDATE task
-export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params;
+export const PUT = async (
+  req: NextRequest,
+  context: { params: { id: string } }
+) => {
+  const { id } = context.params;
+  const userId = await getUserId(req);
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
+  }
   try {
     const body = await req.json();
-    const ref = doc(db, 'tasks', params.id);
-    await updateDoc(ref, body);
-    return NextResponse.json({ id: params.id, ...body });
+    const ref = db.collection('users').doc(userId).collection('tasks').doc(id);
+    await ref.update(body);
+    return NextResponse.json({ id, ...body });
   } catch (error) {
     console.error('Error updating task:', error);
     return NextResponse.json(
@@ -36,14 +64,21 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       { status: 500 }
     );
   }
-}
+};
 
-// DELETE task
-export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+export const DELETE = async (
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) => {
   const params = await context.params;
+  const id = params.id;
+  const userId = await getUserId(req);
+  if (!userId || !id) {
+    return NextResponse.json({ error: 'Unauthorized: Missing or invalid token or invalid id' }, { status: 401 });
+  }
   try {
-    const ref = doc(db, 'tasks', params.id);
-    await deleteDoc(ref);
+    const ref = db.collection('users').doc(userId).collection('tasks').doc(id);
+    await ref.delete();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting task:', error);
@@ -52,4 +87,4 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       { status: 500 }
     );
   }
-}
+};

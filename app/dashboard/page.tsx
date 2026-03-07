@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-provider';
+import { auth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -63,8 +64,12 @@ export default function DashboardPage() {
       if (filterCategory !== 'all') params.append('category', filterCategory)
       params.append('parentId', 'null') // Only get main tasks
 
+      let token = '';
+      if (auth.currentUser) {
+        token = await auth.currentUser.getIdToken();
+      }
       const response = await fetch(`/api/tasks?${params}`, {
-        headers: user?.uid ? { 'x-user-id': user.uid } : {},
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await response.json()
       setTasks(data.tasks || [])
@@ -90,19 +95,20 @@ export default function DashboardPage() {
   const handleDeleteTask = async (id: string) => {
     if (!confirm('Are you sure you want to delete this task?')) return
 
-    // Optimistically remove the task from UI
-    setTasks((prev) => prev.filter((task) => task.id !== id))
-
     try {
+      let token = '';
+      if (auth.currentUser) {
+        token = await auth.currentUser.getIdToken();
+      }
       await fetch(`/api/tasks/${id}`, {
         method: 'DELETE',
-        headers: user?.uid ? { 'x-user-id': user.uid } : {},
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
-      fetchAnalytics()
+      fetchTasks(); // Always re-fetch tasks after deletion
+      fetchAnalytics();
     } catch (error) {
       console.error('Error deleting task:', error)
-      // Optionally, re-fetch tasks if deletion failed
-      fetchTasks()
+      fetchTasks(); // Re-fetch tasks if deletion failed
     }
   }
 

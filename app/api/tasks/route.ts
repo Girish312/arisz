@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/firebase'
-import { collection, addDoc, getDocs, query, where as fsWhere } from 'firebase/firestore'
+import { getAuth } from '@/lib/firebase-admin'
+import { getFirestore, FieldValue } from 'firebase-admin/firestore'
+const db = getFirestore();
 
-// Helper to get userId from header (to be replaced with real auth in production)
-function getUserId(req: NextRequest): string | null {
-  return req.headers.get('x-user-id');
+// Helper to verify Firebase Auth token and extract userId
+async function getUserId(req: NextRequest): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) return null;
+  const idToken = authHeader.replace('Bearer ', '').trim();
+  try {
+    const decoded = await getAuth().verifyIdToken(idToken);
+    return decoded.uid;
+  } catch {
+    return null;
+  }
 }
 
 // GET all tasks
@@ -15,20 +24,18 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category');
     const parentId = searchParams.get('parentId');
 
-    const userId = getUserId(req);
+    const userId = await getUserId(req);
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized: Missing user ID' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
     }
-    let q = collection(db, 'users', userId, 'tasks');
-    let constraints = [];
-    if (status && status !== 'all') constraints.push(fsWhere('status', '==', status));
-    if (category && category !== 'all') constraints.push(fsWhere('category', '==', category));
+    let queryRef = db.collection('users').doc(userId).collection('tasks') as FirebaseFirestore.Query;
+    if (status && status !== 'all') queryRef = queryRef.where('status', '==', status);
+    if (category && category !== 'all') queryRef = queryRef.where('category', '==', category);
     if (parentId) {
-      if (parentId === 'null') constraints.push(fsWhere('parentId', '==', null));
-      else constraints.push(fsWhere('parentId', '==', parentId));
+      if (parentId === 'null') queryRef = queryRef.where('parentId', '==', null);
+      else queryRef = queryRef.where('parentId', '==', parentId);
     }
-    const finalQuery = constraints.length ? query(q, ...constraints) : q;
-    const snapshot = await getDocs(finalQuery);
+    const snapshot = await queryRef.get();
     const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json({ tasks });
   } catch (error) {
@@ -51,9 +58,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const userId = getUserId(req);
+    const userId = await getUserId(req);
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized: Missing user ID' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
     }
     const newTask = {
       title,
@@ -66,7 +73,7 @@ export async function POST(req: NextRequest) {
       status,
       createdAt: new Date().toISOString(),
     };
-    const docRef = await addDoc(collection(db, 'users', userId, 'tasks'), newTask);
+    const docRef = await db.collection('users').doc(userId).collection('tasks').add(newTask);
     return NextResponse.json({ id: docRef.id, ...newTask }, { status: 201 });
   } catch (error) {
     console.error('Error creating task:', error);
