@@ -31,7 +31,7 @@ export default function AuthPage() {
         setPassword("");
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        setUser(userCredential.user);
+          // AuthProvider context will update user state automatically
         // router.replace("/dashboard");
       }
     } catch (err) {
