@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase'
 import { collection, addDoc, getDocs, query, where as fsWhere } from 'firebase/firestore'
 
+// Helper to get userId from header (to be replaced with real auth in production)
+function getUserId(req: NextRequest): string | null {
+  return req.headers.get('x-user-id');
+}
+
 // GET all tasks
 export async function GET(req: NextRequest) {
   try {
@@ -10,7 +15,11 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category');
     const parentId = searchParams.get('parentId');
 
-    let q = collection(db, 'tasks');
+    const userId = getUserId(req);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized: Missing user ID' }, { status: 401 });
+    }
+    let q = collection(db, 'users', userId, 'tasks');
     let constraints = [];
     if (status && status !== 'all') constraints.push(fsWhere('status', '==', status));
     if (category && category !== 'all') constraints.push(fsWhere('category', '==', category));
@@ -42,6 +51,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    const userId = getUserId(req);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized: Missing user ID' }, { status: 401 });
+    }
     const newTask = {
       title,
       description: description || '',
@@ -53,7 +66,7 @@ export async function POST(req: NextRequest) {
       status,
       createdAt: new Date().toISOString(),
     };
-    const docRef = await addDoc(collection(db, 'tasks'), newTask);
+    const docRef = await addDoc(collection(db, 'users', userId, 'tasks'), newTask);
     return NextResponse.json({ id: docRef.id, ...newTask }, { status: 201 });
   } catch (error) {
     console.error('Error creating task:', error);

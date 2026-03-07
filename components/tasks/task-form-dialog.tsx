@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth-provider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +17,7 @@ interface TaskFormDialogProps {
 }
 
 export function TaskFormDialog({ onTaskCreated, parentId = null, trigger }: TaskFormDialogProps) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -34,7 +36,10 @@ export function TaskFormDialog({ onTaskCreated, parentId = null, trigger }: Task
     try {
       const response = await fetch('/api/tasks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.uid ? { 'x-user-id': user.uid } : {}),
+        },
         body: JSON.stringify({
           ...formData,
           parentId,

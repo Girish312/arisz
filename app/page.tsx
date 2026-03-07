@@ -52,11 +52,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Dashboard Redirect */}
+          {/* Auth Redirect */}
           <div className="flex gap-4 justify-center mt-12">
-            <Link href="/dashboard">
+            <Link href="/auth">
               <Button size="lg" className="text-lg px-8 py-6">
-                Go to Dashboard
+                Sign In / Sign Up
               </Button>
             </Link>
           </div>

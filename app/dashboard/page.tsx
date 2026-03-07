@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth-provider';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -36,7 +38,8 @@ interface Analytics {
 }
 
 export default function DashboardPage() {
-  // No authentication/session logic
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,9 +47,14 @@ export default function DashboardPage() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [analyticsPeriod, setAnalyticsPeriod] = useState('daily');
 
+  const [loggingOut, setLoggingOut] = useState(false);
   useEffect(() => {
-    // No authentication check
-  }, [])
+    if (!authLoading && !user && !loggingOut) {
+      router.replace('/auth');
+    }
+  }, [user, authLoading, loggingOut, router]);
+
+  // ...existing code...
 
   const fetchTasks = async () => {
     try {
@@ -55,7 +63,9 @@ export default function DashboardPage() {
       if (filterCategory !== 'all') params.append('category', filterCategory)
       params.append('parentId', 'null') // Only get main tasks
 
-      const response = await fetch(`/api/tasks?${params}`)
+      const response = await fetch(`/api/tasks?${params}`, {
+        headers: user?.uid ? { 'x-user-id': user.uid } : {},
+      });
       const data = await response.json()
       setTasks(data.tasks || [])
     } catch (error) {
@@ -84,7 +94,10 @@ export default function DashboardPage() {
     setTasks((prev) => prev.filter((task) => task.id !== id))
 
     try {
-      await fetch(`/api/tasks/${id}`, { method: 'DELETE' })
+      await fetch(`/api/tasks/${id}`, {
+        method: 'DELETE',
+        headers: user?.uid ? { 'x-user-id': user.uid } : {},
+      })
       fetchAnalytics()
     } catch (error) {
       console.error('Error deleting task:', error)
@@ -93,16 +106,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // ...existing code...
 
   // Prepare chart data
   const categoryData = analytics?.categoryBreakdown
@@ -131,7 +135,20 @@ export default function DashboardPage() {
             <span className="text-sm text-gray-500">Task Management</span>
           </div>
           <div className="flex items-center gap-4">
-            {/* No user info or sign out button */}
+            {user && (
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  setLoggingOut(true);
+                  const { signOut } = await import("firebase/auth");
+                  const { auth } = await import("@/lib/auth");
+                  await signOut(auth);
+                  router.replace("/");
+                }}
+              >
+                Logout
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -347,63 +364,16 @@ export default function DashboardPage() {
                   <CardDescription>Distribution across categories</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {categoryData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-[300px] flex items-center justify-center text-gray-500">
-                      No data available
-                    </div>
-                  )}
+                  {/* Chart or content goes here */}
                 </CardContent>
               </Card>
-
-              {/* Priority Distribution */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tasks by Priority</CardTitle>
-                  <CardDescription>Priority level breakdown</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {priorityData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={priorityData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="tasks" fill="#4CAF50" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-[300px] flex items-center justify-center text-gray-500">
-                      No data available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
-  )
+              </div>
+            </TabsContent>
+            <TabsContent value="analytics" className="space-y-6">
+              {/* Period Selector and analytics content here */}
+            </TabsContent>
+          </Tabs>
+        </main>
+      </div>
+  );
 }
