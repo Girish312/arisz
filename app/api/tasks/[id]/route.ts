@@ -20,15 +20,16 @@ async function getUserId(req: NextRequest): Promise<string | null> {
 
 export const GET = async (
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const { id } = context.params;
+  const params = await context.params;
+  const id = params.id;
   const userId = await getUserId(req);
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
   }
   try {
-    const ref = db.collection('users').doc(userId).collection('tasks').doc(id);
+    const ref = db.collection('users').doc(userId!).collection('tasks').doc(id);
     const snap = await ref.get();
     if (!snap.exists) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -45,16 +46,17 @@ export const GET = async (
 
 export const PUT = async (
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const { id } = context.params;
+  const params = await context.params;
+  const id = params.id;
   const userId = await getUserId(req);
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
   }
   try {
     const body = await req.json();
-    const ref = db.collection('users').doc(userId).collection('tasks').doc(id);
+    const ref = db.collection('users').doc(userId!).collection('tasks').doc(id);
     await ref.update(body);
     return NextResponse.json({ id, ...body });
   } catch (error) {
