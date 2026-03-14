@@ -77,6 +77,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id: docRef.id, ...newTask }, { status: 201 });
   } catch (error) {
     console.error('Error creating task:', error);
+    // Log the error object for Vercel logs
+    if (error instanceof Error) {
+      console.error(error.stack || error.message);
+    } else {
+      console.error(error);
+    }
     return NextResponse.json(
       { error: 'Failed to create task' },
       { status: 500 }
